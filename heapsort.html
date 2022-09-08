@@ -1,0 +1,121 @@
+<html lang="fr">
+
+<head>
+
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script id="MathJax-script" async src="lib/tex-mml-chtml.js"></script>
+    <script src="videojs.js"></script>
+    <link href="engine.css" rel="stylesheet">
+    <meta charset="UTF-8">
+</head>
+
+<body>
+    <canvas id="canvas" width="1920" height="1080">
+    </canvas>
+</body>
+
+<script>
+
+
+    function addChunkCurrentHeap(ms, i, iprio) {
+        const heapCopy = [...heap];
+        video.addChunk(ms, (ctx, t) => { drawHeap(ctx, heapCopy, i, iprio); });
+
+
+    }
+    const heap = (new Array(100)).map((v) => Math.round(Math.random() * 255));
+
+
+    for (let i = 1; i < heap.length; i++)
+        heap[i] = Math.round(Math.random() * 255);
+
+    heap[0] = heap.length;
+
+    const sizeSand = 12;
+    const drawSand = (ctx, x, y, v, isInHeap, highlight) => {
+        ctx.beginPath();
+        const v2 = 255 - v;
+        ctx.fillStyle = `rgb(${v2}, ${Math.round(0.9 * v2)}, ${Math.round(3 * v2 / 4)}) `;
+        ctx.arc(x, y, isInHeap ? sizeSand : sizeSand * 3 / 4, 0, 2 * Math.PI);
+        ctx.lineWidth = isInHeap ? 8 : 2;
+        ctx.strokeStyle = highlight ? "red" : "black";
+        ctx.stroke();
+        ctx.fill();
+    }
+
+    function drawHeap(ctx, heap, i1, i2) {
+        const heapSize = heap[0]
+        const height = Math.log2(heap.length);
+        for (let i = 1; i < heap.length; i++) {
+
+            const h = Math.floor(Math.log2(i));
+            const space = (1.3 ** (height - h - 2))
+            const x = (i - 1.5 * 2 ** h) * space;
+
+            drawSand(ctx, 1150 + 2 * sizeSand * x,
+                100 + h * 3 * sizeSand,
+                heap[i], i < heap[0], i == i1 || i == i2)
+
+            if ((i == i1 || i == i2) && i > 1 && i < heap[0])
+                Sound.playNote(i, 110);
+        }
+    }
+
+    /*  video.addChunk(2000, (ctx, t) => {
+      });*/
+    addChunkCurrentHeap(1000)
+
+    function bubbledown(i) {
+        let iprio = i;
+        if (2 * i < heap[0] - 1)
+            if (heap[2 * i] > heap[iprio])
+                iprio = 2 * i;
+        if (2 * i + 1 < heap[0] - 1)
+            if (heap[2 * i + 1] > heap[iprio])
+                iprio = 2 * i + 1;
+
+        if (iprio != i) {
+            [heap[i], heap[iprio]] = [heap[iprio], heap[i]]
+            addChunkCurrentHeap(100, i, iprio)
+            bubbledown(iprio)
+
+        }
+    }
+
+    function heapify() {
+        for (let i = heap.length - 1; i >= 1; i--)
+            bubbledown(i);
+    }
+
+
+
+    function unqueue() {
+        const elprio = heap[1];
+        heap[1] = heap[heap[0] - 1];
+        heap[0]--;
+        addChunkCurrentHeap(500, 1, heap[0])
+        bubbledown(1);
+        return elprio;
+    }
+
+
+
+
+
+
+
+    heapify();
+    addChunkCurrentHeap(1000)
+    for (let i = heap.length - 1; i >= 1; i--) {
+        heap[i] = unqueue();
+        addChunkCurrentHeap(500, 1, heap[0])
+    }
+    addChunkCurrentHeap(1000)
+
+
+
+
+
+</script>
+
+</html>

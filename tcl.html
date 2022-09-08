@@ -1,0 +1,104 @@
+<html lang="fr">
+
+<head>
+
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script id="MathJax-script" async src="lib/tex-mml-chtml.js"></script>
+    <script src="videojs.js"></script>
+    <link href="engine.css" rel="stylesheet">
+    <meta charset="UTF-8">
+</head>
+
+<body>
+    <canvas id="canvas" width="1920" height="1080">
+    </canvas>
+</body>
+
+<script>
+    let nbVal = 100;
+    let X = new Array();
+    const M = new Array();
+    const nbTirages = 4000;
+    const nbDansMot = 50;
+
+    for (let i = 0; i < nbTirages; i++) {
+        X[i] = new Array();
+        for (let j = 0; j < nbDansMot; j++)
+            X[i][j] = Math.floor(nbVal * Math.random());
+        M[i] = Math.floor(X[i].reduce((partialSum, a) => partialSum + a, 0) / nbDansMot);
+    }
+
+    console.log(M)
+
+    const drawEgg = (ctx, x, y, current) => {
+        ctx.beginPath();
+        const h = 0.3;
+        ctx.fillStyle = current ? "orange" : "#88AAFF"
+        ctx.fillRect(x, (y) * h, 1, h);
+        ctx.rect(x, (y) * h, 1, h);
+        /*        const r = 0.5;
+                ctx.arc(x, (y+1) * 2*r, r, 0, 2 * Math.PI);*/
+        ctx.lineWidth = current ? 0.2 : 0.05;
+        ctx.stroke();
+
+        ctx.fill()
+    }
+
+
+    video.addChunk(20, (ctx, t) => {
+    });
+    for (let i = 0; i < nbTirages; i++)
+        video.addChunk(i < 5 ? 1000 : 1, (ctx, t) => {
+            const scale = 18;
+            const xMargin = 32;
+            ctx.save();
+            ctx.transform(scale, 0, 0, -scale, xMargin, 1020);
+            /*   ctx.beginPath();
+               ctx.moveTo(0, 0);
+               ctx.lineTo(nbVal + 1, 0);
+               ctx.lineWidth = 0.05;
+               ctx.strokeStyle = "black";
+               ctx.stroke();*/
+            const count = (i, v) => X[i].filter((el) => el == v).length;
+            for (let v = 0; v < nbVal; v++) {
+                for (let n = 0; n < count(i, v); n++) {
+                    drawEgg(ctx, v, n, true);
+                }
+            }
+
+            if (i < 5) {
+                if (t < 500)
+                    for (let j = 0; j < X[i].length; j++)
+                        Sound.playNote(X[i][j], 500)
+                if (t > 500)
+                    Sound.playNote(M[i], 500)
+
+            }
+
+
+            ctx.restore();
+
+            ctx.save();
+            ctx.transform(scale, 0, 0, -scale, xMargin, 900);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(nbVal + 1, 0);
+            ctx.lineWidth = 0.05;
+            ctx.strokeStyle = "black";
+            ctx.stroke();
+
+            const countM = (i, v) => M.slice(0, i + 1).filter((el) => el == v).length;
+            for (let v = 0; v < nbVal; v++) {
+                const limit = countM(i, v);
+                for (let n = 0; n < limit; n++) {
+                    drawEgg(ctx, v, n, (n == limit - 1 && v == M[i]));
+                }
+            }
+
+            ctx.restore();
+        });
+
+
+</script>
+
+</html>

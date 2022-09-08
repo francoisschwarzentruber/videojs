@@ -1,0 +1,32 @@
+<html lang="fr">
+
+<head>
+
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script id="MathJax-script" async src="lib/tex-mml-chtml.js"></script>
+    <script src="videojs.js"></script>
+    <link href="engine.css" rel="stylesheet">
+    <meta charset="UTF-8">
+</head>
+
+<body>
+    <canvas id="canvas" width="640" height="480">
+    </canvas>
+</body>
+
+<script>
+    video.addChunk(1000, (ctx, t) => {
+        ctx.fillStyle = "black";
+        ctx.font = "32px Verdana";
+        ctx.fillText("Bienvenue dans cette vidéo", 100, 300);
+    });
+
+    video.addChunk(6000, (ctx, t) => {
+        ctx.fillStyle = "red";
+        ctx.font = "32px Verdana";
+        ctx.fillRect(200 + 200 * Math.cos(t/1000), 22, 64, 64);
+    });
+
+</script>
+
+</html>
