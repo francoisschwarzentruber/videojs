@@ -10,23 +10,27 @@
 
     <style>
         canvas {
-            padding-left: 0;
-            padding-right: 0;
-            margin-left: auto;
-            margin-right: auto;
-            display: block;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            margin: auto;
         }
     </style>
 </head>
 
 <body style="background: black">
-    <canvas id="canvas" style="background: black" width="800" height="600">
+    <canvas id="canvas" style="background: black" width="1920" height="1080">
     </canvas>
 </body>
 
 <script>
 
-    const STEP_IN_MS = 5;
+    const STEP_IN_MS = 200;
+    const WIDTH = 1920;
+    const HEIGHT = 1080;
+    const NODERADIUS = 12;
 
     CanvasRenderingContext2D.prototype.circle = function (x, y, r) {
         this.beginPath();
@@ -51,19 +55,54 @@
     }
     for (let i = 0; i < nb; i++) {
         colors[i] = generateColor();
-        vertices.push({ x: Math.random() * 800, y: Math.random() * 600, degree: 0, class: i });
+        let good = false;
+
+        do {
+            let v = { x: NODERADIUS + Math.random() * (WIDTH - 2 * NODERADIUS), y: NODERADIUS + Math.random() * (HEIGHT - 2 * NODERADIUS), degree: 0, class: i };
+            good = true;
+            for (const u of vertices) {
+                if (Math.sqrt((u.x - v.x) ** 2 + (u.y - v.y) ** 2) <= 3 * NODERADIUS) {
+                    good = false;
+                    break;
+                }
+            }
+            if (good)
+                vertices.push(v);
+        } while (!good);
     }
 
     const edges = []
     const maxd = 4;
+
+    function isSegmentCrossing(a, b, c, d) {
+        function toTheRight(a, b, c) {
+            return (c.x - a.x) * (b.y - a.y) + (c.y - a.y) * (a.x - b.x);
+        }
+        return toTheRight(a, b, c) * toTheRight(a, b, d) < 0 && (toTheRight(c, d, a) * toTheRight(c, d, b) < 0);
+    }
+
+    function isEdgesCrossing(edge) {
+        for (const e of edges) {
+            if (isSegmentCrossing(vertices[e.from], vertices[e.to], vertices[edge.from], vertices[edge.to]))
+                return true;
+        }
+        return false;
+    }
+
     for (let i = 0; i < vertices.length; i++)
         for (let j = i + 1; j < vertices.length; j++)
-            //   if (vertices[i].degree < maxd && vertices[j].degree < maxd)
-            if (Math.sqrt((vertices[i].x - vertices[j].x) ** 2 + (vertices[i].y - vertices[j].y) ** 2) < 100) {
-                edges.push({ from: i, to: j, weight: Math.sqrt((vertices[i].x - vertices[j].x) ** 2 + (vertices[i].y - vertices[j].y) ** 2) });
-                vertices[i].degree++;
-                vertices[j].degree++;
+            if (Math.sqrt((vertices[i].x - vertices[j].x) ** 2 + (vertices[i].y - vertices[j].y) ** 2) < WIDTH / 10) {
+                const newEdge = { from: i, to: j, weight: Math.sqrt((vertices[i].x - vertices[j].x) ** 2 + (vertices[i].y - vertices[j].y) ** 2) };
+
+                if (!isEdgesCrossing(newEdge)) {
+                    edges.push({ from: i, to: j, weight: Math.sqrt((vertices[i].x - vertices[j].x) ** 2 + (vertices[i].y - vertices[j].y) ** 2) });
+                    vertices[i].degree++;
+                    vertices[j].degree++;
+                }
+
             }
+
+
 
 
     edges.sort((e1, e2) => e1.weight - e2.weight);
@@ -90,30 +129,33 @@
             forest.push(e);
             union(vertices[e.from], vertices[e.to]);
         }
+        else {
+            v = 64;
+            ctx.strokeStyle = `rgb(${v},${v}, ${v})`;
+            ctx.beginPath();
+            ctx.lineWidth = NODERADIUS/2;
+            ctx.moveTo(vertices[e.from].x, vertices[e.from].y);
+            ctx.lineTo(vertices[e.to].x, vertices[e.to].y);
+            ctx.stroke();
+        }
         edges.shift();
         draw();
 
-        ctx.setLineDash([1, 2]);
-        v = 255;
-        ctx.strokeStyle = `rgb(${v},${v}, ${v})`;
-        ctx.beginPath();
-        ctx.lineWidth = 1;
-        ctx.moveTo(vertices[e.from].x, vertices[e.from].y);
-        ctx.lineTo(vertices[e.to].x, vertices[e.to].y);
-        ctx.stroke();
+
+
     }
 
 
+    drawInitialEdges();
+    draw();
 
     setInterval(oneStep, STEP_IN_MS);
 
-
-    function draw() {
+    function drawInitialEdges() {
         ctx = canvas.getContext("2d");
-
-        ctx.setLineDash([1, 2]);
+        ctx.setLineDash([]);
         for (const e of edges) {
-            const v = 64;
+            const v = 128;
             ctx.strokeStyle = `rgb(${v},${v}, ${v})`;
             ctx.beginPath();
             ctx.lineWidth = 1;
@@ -121,10 +163,17 @@
             ctx.lineTo(vertices[e.to].x, vertices[e.to].y);
             ctx.stroke();
         }
+    }
+
+
+
+
+    function draw() {
+        ctx = canvas.getContext("2d");
 
         for (const point of vertices) {
             ctx.fillStyle = colors[point.class];
-            ctx.circle(point.x, point.y, 3);
+            ctx.circle(point.x, point.y, NODERADIUS);
             ctx.fill();
         }
 
@@ -132,7 +181,7 @@
         for (const e of forest) {
             ctx.strokeStyle = colors[vertices[e.from].class];
             ctx.beginPath();
-            ctx.lineWidth = 2;
+            ctx.lineWidth = NODERADIUS / 2;
             ctx.moveTo(vertices[e.from].x, vertices[e.from].y);
             ctx.lineTo(vertices[e.to].x, vertices[e.to].y);
             ctx.stroke();
