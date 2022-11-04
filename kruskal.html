@@ -26,6 +26,8 @@
 
 <script>
 
+    const STEP_IN_MS = 5;
+
     CanvasRenderingContext2D.prototype.circle = function (x, y, r) {
         this.beginPath();
         this.arc(x, y, r, 0, 2 * Math.PI);
@@ -90,11 +92,20 @@
         }
         edges.shift();
         draw();
+
+        ctx.setLineDash([1, 2]);
+        v = 255;
+        ctx.strokeStyle = `rgb(${v},${v}, ${v})`;
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.moveTo(vertices[e.from].x, vertices[e.from].y);
+        ctx.lineTo(vertices[e.to].x, vertices[e.to].y);
+        ctx.stroke();
     }
 
 
 
-    setInterval(oneStep, 10);
+    setInterval(oneStep, STEP_IN_MS);
 
 
     function draw() {
